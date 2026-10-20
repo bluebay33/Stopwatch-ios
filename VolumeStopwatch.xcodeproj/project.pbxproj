@@ -1,0 +1,60 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		1A000001 /* VolumeStopwatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000011 /* VolumeStopwatchApp.swift */; };
+		1A000002 /* StopwatchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000012 /* StopwatchView.swift */; };
+		1A000003 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1A000013 /* Assets.xcassets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		1A000011 /* VolumeStopwatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolumeStopwatchApp.swift; sourceTree = "<group>"; };
+		1A000012 /* StopwatchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StopwatchView.swift; sourceTree = "<group>"; };
+		1A000013 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		1A000014 /* VolumeStopwatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VolumeStopwatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		1A000021 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		1A000031 = {isa = PBXGroup; children = (1A000032 /* VolumeStopwatch */, 1A000033 /* Products */); sourceTree = "<group>"; };
+		1A000032 /* VolumeStopwatch */ = {isa = PBXGroup; children = (1A000011 /* VolumeStopwatchApp.swift */, 1A000012 /* StopwatchView.swift */, 1A000013 /* Assets.xcassets */); path = VolumeStopwatch; sourceTree = "<group>"; };
+		1A000033 /* Products */ = {isa = PBXGroup; children = (1A000014 /* VolumeStopwatch.app */); name = Products; sourceTree = "<group>"; };
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		1A000041 /* VolumeStopwatch */ = {isa = PBXNativeTarget; buildConfigurationList = 1A000051 /* Build configuration list for PBXNativeTarget \"VolumeStopwatch\" */; buildPhases = (1A000061 /* Sources */, 1A000021 /* Frameworks */, 1A000062 /* Resources */); buildRules = (); dependencies = (); name = VolumeStopwatch; productName = VolumeStopwatch; productReference = 1A000014 /* VolumeStopwatch.app */; productType = "com.apple.product-type.application"; };
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		1A000071 /* Project object */ = {isa = PBXProject; attributes = { BuildIndependentTargetsInParallel = 1; LastSwiftUpdateCheck = 1600; LastUpgradeCheck = 1600; TargetAttributes = { 1A000041 = { CreatedOnToolsVersion = 16.0; }; }; }; buildConfigurationList = 1A000072 /* Build configuration list for PBXProject \"VolumeStopwatch\" */; compatibilityVersion = "Xcode 14.0"; developmentRegion = en; hasScannedForEncodings = 0; knownRegions = (en, Base); mainGroup = 1A000031; productRefGroup = 1A000033 /* Products */; projectDirPath = ""; projectRoot = ""; targets = (1A000041 /* VolumeStopwatch */); };
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		1A000062 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (1A000003 /* Assets.xcassets in Resources */); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		1A000061 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (1A000001 /* VolumeStopwatchApp.swift in Sources */, 1A000002 /* StopwatchView.swift in Sources */); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		1A000081 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = { ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; CLANG_ENABLE_OBJC_ARC = YES; DEBUG_INFORMATION_FORMAT = dwarf; ENABLE_TESTABILITY = YES; GCC_C_LANGUAGE_STANDARD = gnu17; GCC_NO_COMMON_BLOCKS = YES; SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)"; SWIFT_OPTIMIZATION_LEVEL = "-Onone"; }; name = Debug; };
+		1A000082 /* Release */ = {isa = XCBuildConfiguration; buildSettings = { ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; CLANG_ENABLE_OBJC_ARC = YES; DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym"; GCC_C_LANGUAGE_STANDARD = gnu17; GCC_NO_COMMON_BLOCKS = YES; SWIFT_COMPILATION_MODE = wholemodule; SWIFT_OPTIMIZATION_LEVEL = "-O"; }; name = Release; };
+		1A000083 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = { CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; DEVELOPMENT_TEAM = ""; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = MarkLap; INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES; IPHONEOS_DEPLOYMENT_TARGET = 17.0; LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks"; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.bluebay33.volumestopwatch; PRODUCT_NAME = MarkLap; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2"; }; name = Debug; };
+		1A000084 /* Release */ = {isa = XCBuildConfiguration; buildSettings = { CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; DEVELOPMENT_TEAM = ""; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = MarkLap; INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES; IPHONEOS_DEPLOYMENT_TARGET = 17.0; LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks"; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.bluebay33.volumestopwatch; PRODUCT_NAME = MarkLap; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2"; }; name = Release; };
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1A000051 /* Build configuration list for PBXNativeTarget \"VolumeStopwatch\" */ = {isa = XCConfigurationList; buildConfigurations = (1A000083 /* Debug */, 1A000084 /* Release */); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		1A000072 /* Build configuration list for PBXProject \"VolumeStopwatch\" */ = {isa = XCConfigurationList; buildConfigurations = (1A000081 /* Debug */, 1A000082 /* Release */); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+/* End XCConfigurationList section */
+	};
+	rootObject = 1A000071 /* Project object */;
+}

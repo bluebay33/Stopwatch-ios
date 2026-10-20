@@ -1,0 +1,45 @@
+# Codemagic macOS 构建 → 自动签名 → 上传 TestFlight。
+# 复用 worldcup-ios 中已验证的 App Store Connect 集成和发布证书私钥。
+workflows:
+  ios-testflight:
+    name: MarkLap · TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    integrations:
+      app_store_connect: CodemagicASC
+    environment:
+      xcode: latest
+      groups:
+        - ios_signing
+      vars:
+        BUNDLE_ID: "com.bluebay33.volumestopwatch"
+    scripts:
+      - name: 设置 TestFlight build 号
+        script: |
+          # 工程使用 Xcode 自动生成 Info.plist，因此直接更新 build setting。
+          sed -i '' -E "s/CURRENT_PROJECT_VERSION = [0-9]+;/CURRENT_PROJECT_VERSION = ${BUILD_NUMBER};/g" \
+            "$CM_BUILD_DIR/VolumeStopwatch.xcodeproj/project.pbxproj"
+      - name: 初始化 keychain
+        script: keychain initialize
+      - name: 获取或创建 App Store 签名文件
+        script: |
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --certificate-key=@env:CERTIFICATE_PRIVATE_KEY \
+            --create
+      - name: 导入证书
+        script: keychain add-certificates
+      - name: 应用签名描述文件
+        script: xcode-project use-profiles
+      - name: 构建 IPA
+        script: |
+          xcode-project build-ipa \
+            --project "$CM_BUILD_DIR/VolumeStopwatch.xcodeproj" \
+            --scheme VolumeStopwatch
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: false
