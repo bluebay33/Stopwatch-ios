@@ -18,8 +18,11 @@ final class VoiceCommandListener: NSObject, ObservableObject {
     private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     private var recognitionTask: SFSpeechRecognitionTask?
     private var lastRecognizedCommandAt = Date.distantPast
+    private var wantsListening = false
+    private var isRestarting = false
 
     func requestAccessAndStart() {
+        wantsListening = true
         SFSpeechRecognizer.requestAuthorization { [weak self] authorization in
             DispatchQueue.main.async {
                 guard let self else { return }
@@ -41,12 +44,13 @@ final class VoiceCommandListener: NSObject, ObservableObject {
     }
 
     func restartListening() {
-        stopListening()
-        requestAccessAndStart()
+        wantsListening = true
+        stopEngine()
+        startListening()
     }
 
     func startListening() {
-        guard !audioEngine.isRunning, recognizer?.isAvailable == true else {
+        guard wantsListening, !audioEngine.isRunning, recognizer?.isAvailable == true else {
             if recognizer?.isAvailable == false { statusMessage = "VOICE: NOT AVAILABLE" }
             return
         }
@@ -58,6 +62,8 @@ final class VoiceCommandListener: NSObject, ObservableObject {
 
             let request = SFSpeechAudioBufferRecognitionRequest()
             request.shouldReportPartialResults = true
+            request.taskHint = .confirmation
+            request.contextualStrings = ["start", "go", "stop", "reset", "MarkLap"]
             recognitionRequest = request
 
             let input = audioEngine.inputNode
@@ -72,10 +78,7 @@ final class VoiceCommandListener: NSObject, ObservableObject {
                 Task { @MainActor [weak self] in
                     guard let self else { return }
                     if let transcript { self.consume(transcript) }
-                    if isFinished {
-                        self.stopListening()
-                        self.requestAccessAndStart()
-                    }
+                    if isFinished { self.restartAfterRecognitionEnds() }
                 }
             }
 
@@ -90,6 +93,11 @@ final class VoiceCommandListener: NSObject, ObservableObject {
     }
 
     func stopListening() {
+        wantsListening = false
+        stopEngine()
+    }
+
+    private func stopEngine() {
         if audioEngine.isRunning { audioEngine.stop() }
         audioEngine.inputNode.removeTap(onBus: 0)
         recognitionRequest?.endAudio()
@@ -97,6 +105,18 @@ final class VoiceCommandListener: NSObject, ObservableObject {
         recognitionRequest = nil
         recognitionTask = nil
         isListening = false
+    }
+
+    private func restartAfterRecognitionEnds() {
+        guard wantsListening, !isRestarting else { return }
+        isRestarting = true
+        stopEngine()
+        statusMessage = "VOICE: RECONNECTING…"
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
+            guard let self else { return }
+            self.isRestarting = false
+            self.startListening()
+        }
     }
 
     private func consume(_ transcript: String) {
@@ -119,12 +139,6 @@ final class VoiceCommandListener: NSObject, ObservableObject {
 @MainActor
 final class TimeAnnouncer {
     private let synthesizer = AVSpeechSynthesizer()
-
-    func prepare() {
-        let session = AVAudioSession.sharedInstance()
-        try? session.setCategory(.playAndRecord, mode: .spokenAudio, options: [.defaultToSpeaker, .allowBluetooth])
-        try? session.setActive(true)
-    }
 
     func speak(seconds: Int) {
         let phrase: String

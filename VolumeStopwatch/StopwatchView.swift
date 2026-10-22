@@ -215,7 +215,6 @@ final class StopwatchModel: ObservableObject {
         startedAt = now
         lapStartedAt = now
         isRunning = true
-        announcer.prepare()
         haptics.prepare()
         beginUpdates()
     }
