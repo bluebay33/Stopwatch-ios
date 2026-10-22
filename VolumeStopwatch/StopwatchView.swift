@@ -2,6 +2,7 @@ import SwiftUI
 
 struct StopwatchView: View {
     @StateObject private var stopwatch = StopwatchModel()
+    @StateObject private var voice = VoiceCommandListener()
 
     var body: some View {
         ZStack {
@@ -10,14 +11,18 @@ struct StopwatchView: View {
 
             VStack(spacing: 0) {
                 header
-                Spacer(minLength: 26)
+                Spacer(minLength: 16)
                 timeCard
-                Text("TAP START / PAUSE     •     LAP / RESET")
+                Text("SAY \"START\" OR \"GO\"  •  \"STOP\" RESETS")
                     .font(.caption2.weight(.semibold))
                     .tracking(1.1)
                     .foregroundStyle(Color.secondary.opacity(0.85))
-                    .padding(.top, 22)
-                    .padding(.bottom, 18)
+                    .padding(.top, 16)
+                    .padding(.bottom, 10)
+                Text(voice.statusMessage)
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(voice.isListening ? Color.mint : Color.orange)
+                    .padding(.bottom, 14)
                 controls
                 lapList
             }
@@ -26,6 +31,15 @@ struct StopwatchView: View {
             .padding(.bottom, 6)
         }
         .preferredColorScheme(.dark)
+        .onAppear {
+            voice.onCommand = { command in
+                stopwatch.handle(command)
+            }
+            voice.requestAccessAndStart()
+        }
+        .onDisappear {
+            voice.stopListening()
+        }
     }
 
     private var header: some View {
@@ -34,7 +48,7 @@ struct StopwatchView: View {
                 .font(.caption.weight(.bold))
                 .tracking(2)
                 .foregroundStyle(Color.mint)
-            Text("Stopwatch")
+            Text("Eyes-up timing")
                 .font(.largeTitle.weight(.bold))
                 .foregroundStyle(.white)
         }
@@ -42,14 +56,24 @@ struct StopwatchView: View {
     }
 
     private var timeCard: some View {
-        Text(stopwatch.displayTime)
-            .font(.system(size: 48, weight: .bold, design: .monospaced))
-            .minimumScaleFactor(0.65)
+        GeometryReader { proxy in
+            let mainFontSize = min(max(64, proxy.size.width * 0.22), 96)
+            HStack(alignment: .lastTextBaseline, spacing: 0) {
+                Text(stopwatch.displayTime.main)
+                    .font(.system(size: mainFontSize, weight: .bold, design: .monospaced))
+                Text(stopwatch.displayTime.fraction)
+                    .font(.system(size: mainFontSize * 0.48, weight: .bold, design: .monospaced))
+                    .padding(.bottom, mainFontSize * 0.06)
+            }
+            .lineLimit(1)
+            .minimumScaleFactor(0.55)
             .foregroundStyle(Color.mint)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 44)
-            .background(Color(red: 0.086, green: 0.129, blue: 0.216), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-            .accessibilityLabel("Elapsed time \(stopwatch.displayTime)")
+            .frame(width: proxy.size.width, height: proxy.size.height)
+            .accessibilityLabel("Elapsed time \(stopwatch.displayTime.full)")
+        }
+        .frame(height: 176)
+        .frame(maxWidth: .infinity)
+        .background(Color(red: 0.086, green: 0.129, blue: 0.216), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
     }
 
     private var controls: some View {
@@ -67,6 +91,14 @@ struct StopwatchView: View {
             .disabled(!stopwatch.isRunning && !stopwatch.hasElapsed)
             .opacity((!stopwatch.isRunning && !stopwatch.hasElapsed) ? 0.45 : 1)
             .accessibilityHint(stopwatch.isRunning ? "Records a lap" : "Resets the stopwatch")
+
+            Button {
+                voice.restartListening()
+            } label: {
+                Image(systemName: voice.isListening ? "mic.fill" : "mic.slash.fill")
+            }
+            .buttonStyle(VoiceButtonStyle(isActive: voice.isListening))
+            .accessibilityLabel("Restart voice commands")
         }
     }
 
@@ -105,6 +137,19 @@ struct StopwatchView: View {
     }
 }
 
+private struct VoiceButtonStyle: ButtonStyle {
+    let isActive: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.headline)
+            .foregroundStyle(isActive ? Color.mint : Color.orange)
+            .frame(width: 54, height: 54)
+            .background(Color(red: 0.13, green: 0.19, blue: 0.29), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .opacity(configuration.isPressed ? 0.72 : 1)
+    }
+}
+
 private struct StopwatchButtonStyle: ButtonStyle {
     let fill: Color
     let label: Color
@@ -123,6 +168,11 @@ private struct StopwatchButtonStyle: ButtonStyle {
 
 @MainActor
 final class StopwatchModel: ObservableObject {
+    struct DisplayTime {
+        let main: String
+        let fraction: String
+        let full: String
+    }
     struct Lap: Identifiable {
         let id = UUID()
         let number: Int
@@ -137,8 +187,10 @@ final class StopwatchModel: ObservableObject {
     private var lapStartedAt: Date?
     private var timer: Timer?
     private let haptics = UINotificationFeedbackGenerator()
+    private let announcer = TimeAnnouncer()
+    private var announcedMilestones: Set<Int> = []
 
-    var displayTime: String { Self.format(elapsed) }
+    var displayTime: DisplayTime { Self.displayTime(for: elapsed) }
     var hasElapsed: Bool { elapsed > 0 }
 
     func toggle() {
@@ -163,6 +215,7 @@ final class StopwatchModel: ObservableObject {
         startedAt = now
         lapStartedAt = now
         isRunning = true
+        announcer.prepare()
         haptics.prepare()
         beginUpdates()
     }
@@ -183,6 +236,7 @@ final class StopwatchModel: ObservableObject {
         startedAt = nil
         lapStartedAt = nil
         laps.removeAll()
+        announcedMilestones.removeAll()
         haptics.notificationOccurred(.success)
     }
 
@@ -199,6 +253,26 @@ final class StopwatchModel: ObservableObject {
         guard let startedAt else { return }
         elapsed += Date().timeIntervalSince(startedAt)
         self.startedAt = Date()
+        announceMilestoneIfNeeded()
+    }
+
+    func handle(_ command: VoiceCommand) {
+        switch command {
+        case .start:
+            guard !isRunning else { return }
+            start()
+        case .stopAndReset:
+            guard isRunning || hasElapsed else { return }
+            reset()
+        }
+    }
+
+    private func announceMilestoneIfNeeded() {
+        let seconds = Int(elapsed.rounded(.down))
+        let isEarlyCue = seconds == 10 || seconds == 20
+        let isHalfMinuteCue = seconds >= 60 && seconds % 30 == 0
+        guard (isEarlyCue || isHalfMinuteCue), announcedMilestones.insert(seconds).inserted else { return }
+        announcer.speak(seconds: seconds)
     }
 
     static func format(_ interval: TimeInterval) -> String {
@@ -207,6 +281,12 @@ final class StopwatchModel: ObservableObject {
         let seconds = (totalHundredths / 100) % 60
         let hundredths = totalHundredths % 100
         return String(format: "%02d:%02d.%02d", minutes, seconds, hundredths)
+    }
+
+    static func displayTime(for interval: TimeInterval) -> DisplayTime {
+        let full = format(interval)
+        let split = full.split(separator: ".", maxSplits: 1)
+        return DisplayTime(main: String(split[0]), fraction: "." + String(split[1]), full: full)
     }
 }
 
