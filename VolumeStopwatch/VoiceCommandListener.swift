@@ -10,8 +10,8 @@ enum VoiceCommand {
 final class VoiceCommandListener: NSObject, ObservableObject {
     @Published private(set) var isListening = false
     @Published private(set) var statusMessage = "VOICE: REQUESTING ACCESS…"
-
-    var onCommand: ((VoiceCommand) -> Void)?
+    @Published private(set) var commandSequence = 0
+    private(set) var latestCommand: VoiceCommand?
 
     private let recognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
     private let audioEngine = AVAudioEngine()
@@ -128,12 +128,17 @@ final class VoiceCommandListener: NSObject, ObservableObject {
         if words.contains("start") || words.contains("go") {
             lastRecognizedCommandAt = now
             statusMessage = "VOICE HEARD: START"
-            onCommand?(.start)
+            publish(.start)
         } else if words.contains("stop") {
             lastRecognizedCommandAt = now
             statusMessage = "VOICE HEARD: STOP & RESET"
-            onCommand?(.stopAndReset)
+            publish(.stopAndReset)
         }
+    }
+
+    private func publish(_ command: VoiceCommand) {
+        latestCommand = command
+        commandSequence &+= 1
     }
 }
 

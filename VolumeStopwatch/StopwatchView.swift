@@ -33,9 +33,6 @@ struct StopwatchView: View {
         }
         .preferredColorScheme(.dark)
         .onAppear {
-            voice.onCommand = { command in
-                stopwatch.handle(command)
-            }
             voice.requestAccessAndStart()
             applyPendingSystemAction()
         }
@@ -47,6 +44,10 @@ struct StopwatchView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: MarkLapActionStore.didQueueAction)) { _ in
             applyPendingSystemAction()
+        }
+        .onChange(of: voice.commandSequence) { _, _ in
+            guard let command = voice.latestCommand else { return }
+            stopwatch.handle(command)
         }
     }
 
