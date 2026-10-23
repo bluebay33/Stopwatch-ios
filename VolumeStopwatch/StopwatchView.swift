@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct StopwatchView: View {
+    @Environment(\.scenePhase) private var scenePhase
     @StateObject private var stopwatch = StopwatchModel()
     @StateObject private var voice = VoiceCommandListener()
 
@@ -36,9 +37,16 @@ struct StopwatchView: View {
                 stopwatch.handle(command)
             }
             voice.requestAccessAndStart()
+            applyPendingSystemAction()
         }
         .onDisappear {
             voice.stopListening()
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .active { applyPendingSystemAction() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: MarkLapActionStore.didQueueAction)) { _ in
+            applyPendingSystemAction()
         }
     }
 
@@ -53,6 +61,16 @@ struct StopwatchView: View {
                 .foregroundStyle(.white)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func applyPendingSystemAction() {
+        guard let action = MarkLapActionStore.takePendingAction() else { return }
+        switch action {
+        case .start:
+            stopwatch.handle(.start)
+        case .stopAndReset:
+            stopwatch.handle(.stopAndReset)
+        }
     }
 
     private var timeCard: some View {

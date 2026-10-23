@@ -64,6 +64,7 @@ final class VoiceCommandListener: NSObject, ObservableObject {
             request.shouldReportPartialResults = true
             request.taskHint = .confirmation
             request.contextualStrings = ["start", "go", "stop", "reset", "MarkLap"]
+            request.requiresOnDeviceRecognition = recognizer?.supportsOnDeviceRecognition == true
             recognitionRequest = request
 
             let input = audioEngine.inputNode
