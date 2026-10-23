@@ -206,7 +206,7 @@ final class StopwatchModel: ObservableObject {
     private var timer: Timer?
     private let haptics = UINotificationFeedbackGenerator()
     private let announcer = TimeAnnouncer()
-    private var announcedMilestones: Set<Int> = []
+    private var nextAnnouncementSecond = 10
 
     var displayTime: DisplayTime { Self.displayTime(for: elapsed) }
     var hasElapsed: Bool { elapsed > 0 }
@@ -253,7 +253,7 @@ final class StopwatchModel: ObservableObject {
         startedAt = nil
         lapStartedAt = nil
         laps.removeAll()
-        announcedMilestones.removeAll()
+        nextAnnouncementSecond = 10
         haptics.notificationOccurred(.success)
     }
 
@@ -286,10 +286,20 @@ final class StopwatchModel: ObservableObject {
 
     private func announceMilestoneIfNeeded() {
         let seconds = Int(elapsed.rounded(.down))
-        let isEarlyCue = seconds == 10 || seconds == 20
-        let isHalfMinuteCue = seconds >= 60 && seconds % 30 == 0
-        guard (isEarlyCue || isHalfMinuteCue), announcedMilestones.insert(seconds).inserted else { return }
-        announcer.speak(seconds: seconds)
+        guard seconds >= nextAnnouncementSecond else { return }
+
+        // Timer callbacks aren't guaranteed to land exactly on an integer second.
+        // Advance the schedule only after speaking, so 60, 90, 120… aren't skipped
+        // when a frame arrives slightly late.
+        announcer.speak(seconds: nextAnnouncementSecond)
+        switch nextAnnouncementSecond {
+        case 10:
+            nextAnnouncementSecond = 20
+        case 20:
+            nextAnnouncementSecond = 60
+        default:
+            nextAnnouncementSecond += 30
+        }
     }
 
     static func format(_ interval: TimeInterval) -> String {
