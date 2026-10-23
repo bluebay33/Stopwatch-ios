@@ -293,10 +293,10 @@ final class StopwatchModel: ObservableObject {
         // when a frame arrives slightly late.
         announcer.speak(seconds: nextAnnouncementSecond)
         switch nextAnnouncementSecond {
-        case 10:
-            nextAnnouncementSecond = 20
-        case 20:
+        case 50:
             nextAnnouncementSecond = 60
+        case 10, 20, 30, 40:
+            nextAnnouncementSecond += 10
         default:
             nextAnnouncementSecond += 30
         }
