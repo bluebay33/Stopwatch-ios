@@ -250,6 +250,7 @@ final class StopwatchModel: ObservableObject {
     func reset() {
         timer?.invalidate()
         timer = nil
+        isRunning = false
         elapsed = 0
         startedAt = nil
         lapStartedAt = nil
