@@ -11,6 +11,7 @@
 		1A000003 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1A000013 /* Assets.xcassets */; };
 		1A000004 /* VoiceCommandListener.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000015 /* VoiceCommandListener.swift */; };
 		1A000005 /* MarkLapIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000016 /* MarkLapIntents.swift */; };
+		1A000006 /* Metronome.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A000017 /* Metronome.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -20,6 +21,7 @@
 		1A000014 /* VolumeStopwatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VolumeStopwatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1A000015 /* VoiceCommandListener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceCommandListener.swift; sourceTree = "<group>"; };
 		1A000016 /* MarkLapIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkLapIntents.swift; sourceTree = "<group>"; };
+		1A000017 /* Metronome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Metronome.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -28,7 +30,7 @@
 
 /* Begin PBXGroup section */
 		1A000031 = {isa = PBXGroup; children = (1A000032 /* VolumeStopwatch */, 1A000033 /* Products */); sourceTree = "<group>"; };
-		1A000032 /* VolumeStopwatch */ = {isa = PBXGroup; children = (1A000011 /* VolumeStopwatchApp.swift */, 1A000012 /* StopwatchView.swift */, 1A000015 /* VoiceCommandListener.swift */, 1A000016 /* MarkLapIntents.swift */, 1A000013 /* Assets.xcassets */); path = VolumeStopwatch; sourceTree = "<group>"; };
+		1A000032 /* VolumeStopwatch */ = {isa = PBXGroup; children = (1A000011 /* VolumeStopwatchApp.swift */, 1A000012 /* StopwatchView.swift */, 1A000015 /* VoiceCommandListener.swift */, 1A000016 /* MarkLapIntents.swift */, 1A000017 /* Metronome.swift */, 1A000013 /* Assets.xcassets */); path = VolumeStopwatch; sourceTree = "<group>"; };
 		1A000033 /* Products */ = {isa = PBXGroup; children = (1A000014 /* VolumeStopwatch.app */); name = Products; sourceTree = "<group>"; };
 /* End PBXGroup section */
 
@@ -45,7 +47,7 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		1A000061 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (1A000001 /* VolumeStopwatchApp.swift in Sources */, 1A000002 /* StopwatchView.swift in Sources */, 1A000004 /* VoiceCommandListener.swift in Sources */, 1A000005 /* MarkLapIntents.swift in Sources */); runOnlyForDeploymentPostprocessing = 0; };
+		1A000061 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (1A000001 /* VolumeStopwatchApp.swift in Sources */, 1A000002 /* StopwatchView.swift in Sources */, 1A000004 /* VoiceCommandListener.swift in Sources */, 1A000005 /* MarkLapIntents.swift in Sources */, 1A000006 /* Metronome.swift in Sources */); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */

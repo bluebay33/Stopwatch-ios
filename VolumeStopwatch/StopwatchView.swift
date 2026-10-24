@@ -207,7 +207,9 @@ final class StopwatchModel: ObservableObject {
     private var timer: Timer?
     private let haptics = UINotificationFeedbackGenerator()
     private let announcer = TimeAnnouncer()
+    private let metronome = Metronome()
     private var nextAnnouncementSecond = 10
+    private var lastTickedSecond = 0
 
     var displayTime: DisplayTime { Self.displayTime(for: elapsed) }
     var hasElapsed: Bool { elapsed > 0 }
@@ -244,6 +246,7 @@ final class StopwatchModel: ObservableObject {
         startedAt = nil
         timer?.invalidate()
         timer = nil
+        metronome.stop()
         haptics.notificationOccurred(.warning)
     }
 
@@ -251,11 +254,13 @@ final class StopwatchModel: ObservableObject {
         timer?.invalidate()
         timer = nil
         isRunning = false
+        metronome.stop()
         elapsed = 0
         startedAt = nil
         lapStartedAt = nil
         laps.removeAll()
         nextAnnouncementSecond = 10
+        lastTickedSecond = 0
         haptics.notificationOccurred(.success)
     }
 
@@ -272,7 +277,12 @@ final class StopwatchModel: ObservableObject {
         guard let startedAt else { return }
         elapsed += Date().timeIntervalSince(startedAt)
         self.startedAt = Date()
-        announceMilestoneIfNeeded()
+        let seconds = Int(elapsed.rounded(.down))
+        guard seconds > lastTickedSecond else { return }
+        lastTickedSecond = seconds
+        if !announceMilestoneIfNeeded() {
+            metronome.tick()
+        }
     }
 
     func handle(_ command: VoiceCommand) {
@@ -286,9 +296,9 @@ final class StopwatchModel: ObservableObject {
         }
     }
 
-    private func announceMilestoneIfNeeded() {
+    private func announceMilestoneIfNeeded() -> Bool {
         let seconds = Int(elapsed.rounded(.down))
-        guard seconds >= nextAnnouncementSecond else { return }
+        guard seconds >= nextAnnouncementSecond else { return false }
 
         // Timer callbacks aren't guaranteed to land exactly on an integer second.
         // Advance the schedule only after speaking, so 60, 90, 120… aren't skipped
@@ -302,6 +312,7 @@ final class StopwatchModel: ObservableObject {
         default:
             nextAnnouncementSecond += 30
         }
+        return true
     }
 
     static func format(_ interval: TimeInterval) -> String {
