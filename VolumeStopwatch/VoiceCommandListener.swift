@@ -1,13 +1,8 @@
 import AVFAudio
 import Speech
 
-enum AnnouncementLanguage {
-    case english
-    case chinese
-}
-
 enum VoiceCommand {
-    case start(AnnouncementLanguage)
+    case start
     case stopAndReset
 }
 
@@ -18,10 +13,7 @@ final class VoiceCommandListener: NSObject, ObservableObject {
     @Published private(set) var commandSequence = 0
     private(set) var latestCommand: VoiceCommand?
 
-    // A single system-dictation recognizer is deliberately used here. Running
-    // two locale recognizers against the same microphone caused iOS to cancel
-    // and restart them in a loop on-device.
-    private let recognizer = SFSpeechRecognizer()
+    private let recognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
     private let audioEngine = AVAudioEngine()
     private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     private var recognitionTask: SFSpeechRecognitionTask?
@@ -72,7 +64,7 @@ final class VoiceCommandListener: NSObject, ObservableObject {
             let request = SFSpeechAudioBufferRecognitionRequest()
             request.shouldReportPartialResults = true
             request.taskHint = .confirmation
-            request.contextualStrings = ["start", "go", "stop", "reset", "开始", "起", "停", "停止", "复位", "MarkLap"]
+            request.contextualStrings = ["start", "go", "stop", "reset", "MarkLap"]
             request.requiresOnDeviceRecognition = recognizer?.supportsOnDeviceRecognition == true
             recognitionRequest = request
 
@@ -95,7 +87,7 @@ final class VoiceCommandListener: NSObject, ObservableObject {
             audioEngine.prepare()
             try audioEngine.start()
             isListening = true
-            statusMessage = "VOICE ON: SYSTEM DICTATION"
+            statusMessage = "VOICE ON: SAY START, GO, OR STOP"
         } catch {
             statusMessage = "VOICE: COULDN’T START"
             stopListening()
@@ -131,26 +123,16 @@ final class VoiceCommandListener: NSObject, ObservableObject {
 
     private func consume(_ transcript: String) {
         let words = Set(transcript.lowercased().split(whereSeparator: { !$0.isLetter }).map(String.init))
-        let compact = transcript.replacingOccurrences(of: " ", with: "")
         let now = Date()
         guard now.timeIntervalSince(lastRecognizedCommandAt) > 1.2 else { return }
 
-        let wantsToStart = words.contains("start") || words.contains("go")
-            || compact.contains("开始") || compact == "起"
-        let wantsToStop = words.contains("stop") || words.contains("reset")
-            || compact.contains("停止") || compact.contains("结束") || compact.contains("复位")
-            || compact == "停"
-
-        let isChineseCommand = compact.contains("开始") || compact.contains("起")
-            || compact.contains("停止") || compact.contains("结束") || compact.contains("复位") || compact == "停"
-
-        if wantsToStart {
+        if words.contains("start") || words.contains("go") {
             lastRecognizedCommandAt = now
-            statusMessage = isChineseCommand ? "VOICE HEARD: 开始" : "VOICE HEARD: START"
-            publish(.start(isChineseCommand ? .chinese : .english))
-        } else if wantsToStop {
+            statusMessage = "VOICE HEARD: START"
+            publish(.start)
+        } else if words.contains("stop") || words.contains("reset") {
             lastRecognizedCommandAt = now
-            statusMessage = isChineseCommand ? "VOICE HEARD: 停止 & 复位" : "VOICE HEARD: STOP & RESET"
+            statusMessage = "VOICE HEARD: STOP & RESET"
             publish(.stopAndReset)
         }
     }
@@ -165,15 +147,9 @@ final class VoiceCommandListener: NSObject, ObservableObject {
 final class TimeAnnouncer {
     private let synthesizer = AVSpeechSynthesizer()
 
-    func speak(seconds: Int, language: AnnouncementLanguage) {
+    func speak(seconds: Int) {
         let phrase: String
-        if language == .chinese, seconds < 60 {
-            phrase = "\(seconds) 秒"
-        } else if language == .chinese {
-            let minutes = seconds / 60
-            let remainder = seconds % 60
-            phrase = remainder == 0 ? "\(minutes) 分钟" : "\(minutes) 分 \(remainder) 秒"
-        } else if seconds < 60 {
+        if seconds < 60 {
             phrase = "\(seconds) seconds"
         } else {
             let minutes = seconds / 60
@@ -181,7 +157,7 @@ final class TimeAnnouncer {
             phrase = remainder == 0 ? "\(minutes) minute\(minutes == 1 ? "" : "s")" : "\(minutes) minute\(minutes == 1 ? "" : "s"), \(remainder) seconds"
         }
         let utterance = AVSpeechUtterance(string: phrase)
-        utterance.voice = AVSpeechSynthesisVoice(language: language == .chinese ? "zh-CN" : "en-US")
+        utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
         utterance.rate = 0.48
         synthesizer.speak(utterance)
     }
