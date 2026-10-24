@@ -68,7 +68,7 @@ struct StopwatchView: View {
         guard let action = MarkLapActionStore.takePendingAction() else { return }
         switch action {
         case .start:
-            stopwatch.handle(.start)
+            stopwatch.handle(.start(.english))
         case .stopAndReset:
             stopwatch.handle(.stopAndReset)
         }
@@ -210,6 +210,7 @@ final class StopwatchModel: ObservableObject {
     private let metronome = Metronome()
     private var nextAnnouncementSecond = 10
     private var lastTickedSecond = 0
+    private var announcementLanguage: AnnouncementLanguage = .english
 
     var displayTime: DisplayTime { Self.displayTime(for: elapsed) }
     var hasElapsed: Bool { elapsed > 0 }
@@ -287,8 +288,9 @@ final class StopwatchModel: ObservableObject {
 
     func handle(_ command: VoiceCommand) {
         switch command {
-        case .start:
+        case .start(let language):
             guard !isRunning else { return }
+            announcementLanguage = language
             start()
         case .stopAndReset:
             guard isRunning || hasElapsed else { return }
@@ -303,7 +305,7 @@ final class StopwatchModel: ObservableObject {
         // Timer callbacks aren't guaranteed to land exactly on an integer second.
         // Advance the schedule only after speaking, so 60, 90, 120… aren't skipped
         // when a frame arrives slightly late.
-        announcer.speak(seconds: nextAnnouncementSecond)
+        announcer.speak(seconds: nextAnnouncementSecond, language: announcementLanguage)
         switch nextAnnouncementSecond {
         case 50:
             nextAnnouncementSecond = 60
