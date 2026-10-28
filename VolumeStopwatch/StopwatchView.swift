@@ -4,6 +4,9 @@ struct StopwatchView: View {
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var stopwatch = StopwatchModel()
     @StateObject private var voice = VoiceCommandListener()
+    @State private var awakeWindowRelease: DispatchWorkItem?
+
+    private let awakeWindow: TimeInterval = 10 * 60
 
     var body: some View {
         ZStack {
@@ -33,14 +36,21 @@ struct StopwatchView: View {
         }
         .preferredColorScheme(.dark)
         .onAppear {
+            beginAwakeWindow()
             voice.requestAccessAndStart()
             applyPendingSystemAction()
         }
         .onDisappear {
             voice.stopListening()
+            endAwakeWindow()
         }
         .onChange(of: scenePhase) { _, newPhase in
-            if newPhase == .active { applyPendingSystemAction() }
+            if newPhase == .active {
+                beginAwakeWindow()
+                applyPendingSystemAction()
+            } else if newPhase == .background {
+                endAwakeWindow()
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: MarkLapActionStore.didQueueAction)) { _ in
             applyPendingSystemAction()
@@ -72,6 +82,23 @@ struct StopwatchView: View {
         case .stopAndReset:
             stopwatch.handle(.stopAndReset)
         }
+    }
+
+    private func beginAwakeWindow() {
+        awakeWindowRelease?.cancel()
+        UIApplication.shared.isIdleTimerDisabled = true
+
+        let release = DispatchWorkItem {
+            UIApplication.shared.isIdleTimerDisabled = false
+        }
+        awakeWindowRelease = release
+        DispatchQueue.main.asyncAfter(deadline: .now() + awakeWindow, execute: release)
+    }
+
+    private func endAwakeWindow() {
+        awakeWindowRelease?.cancel()
+        awakeWindowRelease = nil
+        UIApplication.shared.isIdleTimerDisabled = false
     }
 
     private var timeCard: some View {
@@ -236,7 +263,6 @@ final class StopwatchModel: ObservableObject {
         startedAt = now
         lapStartedAt = now
         isRunning = true
-        UIApplication.shared.isIdleTimerDisabled = true
         haptics.prepare()
         beginUpdates()
     }
@@ -249,7 +275,6 @@ final class StopwatchModel: ObservableObject {
         timer = nil
         metronome.stop()
         announcer.stop()
-        UIApplication.shared.isIdleTimerDisabled = false
         haptics.notificationOccurred(.warning)
     }
 
@@ -259,7 +284,6 @@ final class StopwatchModel: ObservableObject {
         isRunning = false
         metronome.stop()
         announcer.stop()
-        UIApplication.shared.isIdleTimerDisabled = false
         elapsed = 0
         startedAt = nil
         lapStartedAt = nil
