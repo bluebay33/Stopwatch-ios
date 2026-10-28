@@ -36,7 +36,6 @@ struct StopwatchView: View {
         }
         .preferredColorScheme(.dark)
         .onAppear {
-            beginAwakeWindow()
             voice.requestAccessAndStart()
             applyPendingSystemAction()
         }
@@ -46,7 +45,6 @@ struct StopwatchView: View {
         }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
-                beginAwakeWindow()
                 applyPendingSystemAction()
             } else if newPhase == .background {
                 endAwakeWindow()
@@ -58,6 +56,9 @@ struct StopwatchView: View {
         .onChange(of: voice.commandSequence) { _, _ in
             guard let command = voice.latestCommand else { return }
             stopwatch.handle(command)
+        }
+        .onChange(of: stopwatch.awakeWindowSequence) { _, _ in
+            beginAwakeWindow()
         }
     }
 
@@ -228,6 +229,7 @@ final class StopwatchModel: ObservableObject {
     @Published private(set) var elapsed: TimeInterval = 0
     @Published private(set) var isRunning = false
     @Published private(set) var laps: [Lap] = []
+    @Published private(set) var awakeWindowSequence = 0
 
     private var startedAt: Date?
     private var lapStartedAt: Date?
@@ -263,6 +265,7 @@ final class StopwatchModel: ObservableObject {
         startedAt = now
         lapStartedAt = now
         isRunning = true
+        awakeWindowSequence &+= 1
         haptics.prepare()
         beginUpdates()
     }
