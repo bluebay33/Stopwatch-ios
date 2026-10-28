@@ -159,6 +159,14 @@ final class TimeAnnouncer {
         let utterance = AVSpeechUtterance(string: phrase)
         utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
         utterance.rate = 0.48
+
+        // `speak` queues utterances. A stopwatch report is only useful while it
+        // is current, so discard an old report if audio resumed late.
+        synthesizer.stopSpeaking(at: .immediate)
         synthesizer.speak(utterance)
+    }
+
+    func stop() {
+        synthesizer.stopSpeaking(at: .immediate)
     }
 }

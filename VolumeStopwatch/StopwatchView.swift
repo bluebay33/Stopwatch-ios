@@ -247,6 +247,7 @@ final class StopwatchModel: ObservableObject {
         timer?.invalidate()
         timer = nil
         metronome.stop()
+        announcer.stop()
         haptics.notificationOccurred(.warning)
     }
 
@@ -255,6 +256,7 @@ final class StopwatchModel: ObservableObject {
         timer = nil
         isRunning = false
         metronome.stop()
+        announcer.stop()
         elapsed = 0
         startedAt = nil
         lapStartedAt = nil
