@@ -236,6 +236,7 @@ final class StopwatchModel: ObservableObject {
         startedAt = now
         lapStartedAt = now
         isRunning = true
+        UIApplication.shared.isIdleTimerDisabled = true
         haptics.prepare()
         beginUpdates()
     }
@@ -248,6 +249,7 @@ final class StopwatchModel: ObservableObject {
         timer = nil
         metronome.stop()
         announcer.stop()
+        UIApplication.shared.isIdleTimerDisabled = false
         haptics.notificationOccurred(.warning)
     }
 
@@ -257,6 +259,7 @@ final class StopwatchModel: ObservableObject {
         isRunning = false
         metronome.stop()
         announcer.stop()
+        UIApplication.shared.isIdleTimerDisabled = false
         elapsed = 0
         startedAt = nil
         lapStartedAt = nil
