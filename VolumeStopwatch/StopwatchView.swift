@@ -4,9 +4,6 @@ struct StopwatchView: View {
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var stopwatch = StopwatchModel()
     @StateObject private var voice = VoiceCommandListener()
-    @State private var awakeWindowRelease: DispatchWorkItem?
-
-    private let awakeWindow: TimeInterval = 10 * 60
 
     var body: some View {
         ZStack {
@@ -41,13 +38,13 @@ struct StopwatchView: View {
         }
         .onDisappear {
             voice.stopListening()
-            endAwakeWindow()
+            stopwatch.endAwakeWindow()
         }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
                 applyPendingSystemAction()
             } else if newPhase == .background {
-                endAwakeWindow()
+                stopwatch.endAwakeWindow()
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: MarkLapActionStore.didQueueAction)) { _ in
@@ -56,9 +53,6 @@ struct StopwatchView: View {
         .onChange(of: voice.commandSequence) { _, _ in
             guard let command = voice.latestCommand else { return }
             stopwatch.handle(command)
-        }
-        .onChange(of: stopwatch.awakeWindowSequence) { _, _ in
-            beginAwakeWindow()
         }
     }
 
@@ -83,23 +77,6 @@ struct StopwatchView: View {
         case .stopAndReset:
             stopwatch.handle(.stopAndReset)
         }
-    }
-
-    private func beginAwakeWindow() {
-        awakeWindowRelease?.cancel()
-        UIApplication.shared.isIdleTimerDisabled = true
-
-        let release = DispatchWorkItem {
-            UIApplication.shared.isIdleTimerDisabled = false
-        }
-        awakeWindowRelease = release
-        DispatchQueue.main.asyncAfter(deadline: .now() + awakeWindow, execute: release)
-    }
-
-    private func endAwakeWindow() {
-        awakeWindowRelease?.cancel()
-        awakeWindowRelease = nil
-        UIApplication.shared.isIdleTimerDisabled = false
     }
 
     private var timeCard: some View {
@@ -229,7 +206,6 @@ final class StopwatchModel: ObservableObject {
     @Published private(set) var elapsed: TimeInterval = 0
     @Published private(set) var isRunning = false
     @Published private(set) var laps: [Lap] = []
-    @Published private(set) var awakeWindowSequence = 0
 
     private var startedAt: Date?
     private var lapStartedAt: Date?
@@ -239,6 +215,7 @@ final class StopwatchModel: ObservableObject {
     private let metronome = Metronome()
     private var nextAnnouncementSecond = 10
     private var lastTickedSecond = 0
+    private var awakeWindowRelease: DispatchWorkItem?
 
     var displayTime: DisplayTime { Self.displayTime(for: elapsed) }
     var hasElapsed: Bool { elapsed > 0 }
@@ -265,9 +242,26 @@ final class StopwatchModel: ObservableObject {
         startedAt = now
         lapStartedAt = now
         isRunning = true
-        awakeWindowSequence &+= 1
+        beginAwakeWindow()
         haptics.prepare()
         beginUpdates()
+    }
+
+    private func beginAwakeWindow() {
+        awakeWindowRelease?.cancel()
+        UIApplication.shared.isIdleTimerDisabled = true
+
+        let release = DispatchWorkItem {
+            UIApplication.shared.isIdleTimerDisabled = false
+        }
+        awakeWindowRelease = release
+        DispatchQueue.main.asyncAfter(deadline: .now() + 10 * 60, execute: release)
+    }
+
+    func endAwakeWindow() {
+        awakeWindowRelease?.cancel()
+        awakeWindowRelease = nil
+        UIApplication.shared.isIdleTimerDisabled = false
     }
 
     func pause() {
